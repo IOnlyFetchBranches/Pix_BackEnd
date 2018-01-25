@@ -1,0 +1,28 @@
+﻿<Window x:Class="Pix_Backend.UserDataPopup"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Pix_Backend"
+        mc:Ignorable="d"
+        Title="Info" Height="400
+        
+        " Width="500">
+    <Grid x:Name="UDP_Hword">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="301*"/>
+            <ColumnDefinition Width="191*"/>
+        </Grid.ColumnDefinitions>
+        <Label Content="UID" Margin="230,-60,41.042,429" VerticalAlignment="Bottom" RenderTransformOrigin="-0.01,0.377"/>
+        <Label x:Name="UDP_Uid" Content="Label" Margin="221,18,42.042,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="UDP_Username" Height="23" Margin="146,85,18,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+        <TextBox x:Name="UDP_Email" Height="23" Margin="145,128,19,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+        <Label Content="Username" Margin="60,82,176.042,0" VerticalAlignment="Top"/>
+        <Label Content="HWord" Margin="60,169,176.042,0" VerticalAlignment="Top"/>
+        <Label Content="Email" Margin="60,129,176.042,0" VerticalAlignment="Top"/>
+        <PasswordBox x:Name="UDP_HWord" Margin="146,174,19,0" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+        <TextBox x:Name="UDP_BanReason" Height="23" Margin="32,238,149.042,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top"/>
+        <CheckBox x:Name="UDP_Banned" Content="Banned?" Margin="56,220,180.042,0" VerticalAlignment="Top"/>
+
+    </Grid>
+</Window>
