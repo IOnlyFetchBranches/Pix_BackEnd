@@ -12,14 +12,12 @@ namespace Pix_Api
         {
             // Web API configuration and services
 
+            
+
             // Web API routes
             config.MapHttpAttributeRoutes();
 
-            config.Routes.MapHttpRoute(
-                name: "Root",
-                routeTemplate: "api/",
-                defaults: new { controller = "Root", }
-            );
+            
             config.Routes.MapHttpRoute(
                 name: "UserGetById",
                 routeTemplate: "api/users/{id}",
