@@ -23,14 +23,16 @@ namespace Pix_Api.Controllers
         private static IMongoDatabase database =
           DataManager.Init(Defaults.ConnectionStrings.Localhost, Defaults.DatabaseNames.TestProd, null);
 
-      private Session<Profile> session = new Session<Profile>(database, Defaults.Collections.Users);
+        private Session<Profile> session = new Session<Profile>(database, Defaults.Collections.Users);
 
         private  Profile baseProf = new Profile();
 
         //Controls
         private readonly int MAX_QUERY_ITEM_COUNT = 1000; //The max a single request can get back at a time
 
-      public  async Task<JsonResult<IQueryable<Profile>>> Get(bool use,int limit)
+      private readonly int MAX_QUERY_PAGE_SIZE = 100; //The max a single page request can pull per page.
+
+        public  async Task<JsonResult<IQueryable<Profile>>> Get(bool use,int limit)
       {
 
           
@@ -78,7 +80,9 @@ namespace Pix_Api.Controllers
 
       }
 
-      public async Task<JsonResult<Profile>> GetUserById(string id)
+    
+
+        public async Task<JsonResult<Profile>> GetUserById(string id)
       {
           var result = await session.GetRecordById(id);
           if (result == null)
@@ -92,6 +96,34 @@ namespace Pix_Api.Controllers
               return new JsonResult<Profile>(result,new JsonSerializerSettings(),Encoding.ASCII, new HttpRequestMessage());
           }
       }
+
+        [ActionName("GetUsersByPage")]
+      public async Task<JsonResult<IQueryable<Profile>>> GetUsersByPage(long itemsperpage, long pagenum)
+      {
+          if (itemsperpage > MAX_QUERY_PAGE_SIZE)
+          {
+            itemsperpage = MAX_QUERY_PAGE_SIZE;
+          }
+          if (pagenum > Int64.MaxValue)
+          {
+              return null; //Too_Many_Pages
+          }
+
+          if (pagenum > 1)
+          {
+              var skip = pagenum * itemsperpage;
+              var results = await session.GetSomeAfterOffset((int) skip, (int) itemsperpage);
+              return new JsonResult<IQueryable<Profile>>(results, new JsonSerializerSettings(), Encoding.ASCII, this);
+          }
+          else //iF on page one
+          {
+                //Run basic query 
+              var results = await session.GetSomeAfterOffset(0, (int)itemsperpage);
+              return new JsonResult<IQueryable<Profile>>(results, new JsonSerializerSettings(), Encoding.ASCII, this);
+            }
+          
+      }
+
 
         
         

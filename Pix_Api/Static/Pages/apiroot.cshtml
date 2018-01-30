@@ -1,0 +1,66 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE HTML>
+<html>
+@{ var date = DateTime.Now.ToString();}
+
+<meta charset="utf-8">
+<title>
+    Pix Services
+</title>
+<header>
+
+
+    <!---Link Fonts Here!!! --->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans|Supermercado+One" rel="stylesheet">
+    <link href="/Static/Styles/apiroot.css" type="text/css" rel="stylesheet">
+    <!-- Style Information Here! -->
+
+</header>
+
+
+<script type="text/javascript">
+    //Change text on hover over.
+    var oldText;
+    var WelcomeHoverOn = function() {
+        var header = document.getElementById("WelcomeHeader");
+        oldText = header.innerHTML;
+        header.innerHTML = "This Doesn't Do Anything! (Yet)";
+    }
+    var WelcomeHoverOff = function() {
+        var header = document.getElementById("WelcomeHeader");
+        header.innerHTML = oldText;
+    }
+
+
+</script>
+
+<body>
+<h1 class="header" id="WelcomeHeader" onmouseover="WelcomeHoverOn()" onmouseleave="WelcomeHoverOff()"> Welcome To Pix Services! </h1>
+
+<div>
+    <p id="notes">
+
+    </p>
+</div>
+
+<h4 class="header">
+    [If you don't know what this is please click <a href="http://www.gopix.life">here</a>
+    to get to safety :)]
+</h4>
+</body>
+
+
+
+
+
+
+
+
+
+
+
+</html>
+

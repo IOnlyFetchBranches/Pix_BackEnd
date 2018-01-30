@@ -10,6 +10,7 @@ using pix_dtmodel.Managers;
 using pix_dtmodel.Connectors;
 using Firebase.Auth;
 using System.Net.Http;
+using pix_sec.Gen;
 
 namespace pix_sec
 {
@@ -75,18 +76,9 @@ namespace pix_sec
             //Create model
             pix_dtmodel.Models.User usr = new pix_dtmodel.Models.User();
 
-            //Make a hasher
-            SHA256 hasher = new SHA256Managed();
-
-            hasher.Initialize(); //Init the csp
-
-            //hash email for use in the UID
-            byte[] hashedBytes = hasher.ComputeHash(Encoding.ASCII.GetBytes(email));
-            //Use bit Converter to get hash string
-            string hashString = BitConverter.ToString(hashedBytes).Replace("-", String.Empty);
 
             //Set fields
-            usr.Uid = "USR" + hashString;
+            usr.Uid = ID.GenUid(email); //GenUID
 
             //Check backend for duplicates
             if (userSession.GetRecordById(usr.Uid).Result != null)
@@ -113,6 +105,12 @@ namespace pix_sec
             usr.Gid = tempLink.User.LocalId;
             //Finally add to dbase
             await userSession.Add(usr);
+            await tokenSession.Add(new SessionToken()
+            {
+                Created = tempLink.Created.ToLongDateString(),
+                Expires = usr.TimeLeft,
+                Token = usr.Token
+            });
 
 
 
@@ -122,63 +120,23 @@ namespace pix_sec
 
 
 
-            //cleanup?
-            hasher.Clear();
-            hashedBytes = null;
-            hashString = null;
-
-
             return usr;
         }
 
-
-
-        abstract class Hash
+        //Refresh a session
+        public async Task<bool> VerifySession(SessionToken session)
         {
-
-            public static string SecureHash(byte[] rawWord)
-            {
-                var hasher = new SHA256Managed();
-                //hash email for use in the UID
-                byte[] fHashedBytes = hasher.ComputeHash(rawWord);
-
-                string firstHashed = BitConverter.ToString(fHashedBytes).Replace("-", String.Empty);
-
-                byte[] hashedBytes = hasher.ComputeHash(Encoding.ASCII.GetBytes(firstHashed));
-
-                //Use bit Converter to get hash string
-                string hashString = BitConverter.ToString(hashedBytes).Replace("-", String.Empty);
-
-                return hashString;
-
-            }
-
-
-
-
-
-
-
-
+            return await tokenSession.CheckFieldFrom(session.Token, Defaults.Fields.Users.Uid, session.Uid);
         }
 
-        abstract class ID
+        //Verifies Pics
+        public async Task<bool> VerifyPost(Pic post)
         {
-            public static string GenUid(string email)
-            {
-                //Make a hasher
-                SHA256 hasher = new SHA256Managed();
 
-                hasher.Initialize(); //Init the csp
-
-                //hash email for use in the UID
-                byte[] hashedBytes = hasher.ComputeHash(Encoding.ASCII.GetBytes(email));
-                //Use bit Converter to get hash string
-                string hashString = BitConverter.ToString(hashedBytes).Replace("-", String.Empty);
+            return await tokenSession.CheckFieldFrom(post.Token, Defaults.Fields.Users.Uid, post.Uid);
 
 
-                return "USR" + hashString;
-            }
+
         }
     }
 }

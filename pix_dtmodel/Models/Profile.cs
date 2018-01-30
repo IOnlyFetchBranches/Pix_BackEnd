@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 namespace pix_dtmodel.Models
 {
-    //Transfer Safe Version of User
+    //Transfer Safe Version of User, That is filled by query request.
     public class Profile
     {
         [BsonElement("_id")]
@@ -26,7 +26,12 @@ namespace pix_dtmodel.Models
 
         public string Username { get; set; }
 
-        public string Email { get; set; }
+        private string email;
+        public string Email
+        {
+            get => "Bad Context";
+            set => email = "Ignored!";
+        }
 
         private string hashword;
 

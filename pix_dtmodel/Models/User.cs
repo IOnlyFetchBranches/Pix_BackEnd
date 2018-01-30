@@ -4,6 +4,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace pix_dtmodel.Models
@@ -11,21 +12,22 @@ namespace pix_dtmodel.Models
     public class User
     {
         //Supp Classes
-        public class Name
-        {
+    
 
-            //First, Last, Additional properties
-            public string First { get; set; }
-            public string Last { get; set; }
-
-            [BsonIgnoreIfNull]
-            public string[] Additional { get; set; }
-        }
+       
+        
 
         [BsonElement("_id")]
         public string Uid { get; set; }
 
         public string Username { get; set; }
+
+        //First, Last, Additional properties
+        public string First { get; set; }
+        public string Last { get; set; }
+
+        [BsonIgnoreIfNull]
+        public string[] Additional { get; set; }
 
         public string Email { get; set; }
         

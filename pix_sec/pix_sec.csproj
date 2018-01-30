@@ -123,8 +123,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Gen\Hashing.cs" />
+    <Compile Include="Gen\ID.cs" />
     <Compile Include="Managers\LoginManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rules\Assert.cs" />
     <Compile Include="Rules\Text.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -137,5 +140,6 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -15,6 +15,8 @@ using Newtonsoft.Json;
 using pix_dtmodel.Connectors;
 using pix_dtmodel.Managers;
 using pix_dtmodel.Models;
+using pix_sec;
+using pix_sec.Gen;
 
 namespace Pix_Api.Controllers
 {
@@ -23,9 +25,14 @@ namespace Pix_Api.Controllers
         private static IMongoDatabase database =
             DataManager.Init(Defaults.ConnectionStrings.Localhost, Defaults.DatabaseNames.TestProd, null);
 
-        private int MAX_QUERY_LENGTH = 100; // Max amount of photos that can be sent at a time
+        private int MAX_QUERY_LENGTH = 100; // Max amount of photos that can be sent/retrieved at a time
 
+        //Open a connection with the Pic collection
         private static Session<Pic> session = new Session<Pic>(database, Defaults.Collections.Pics);
+        //Grab the login manager to verify users.
+        private static LoginManager loginManger = LoginManager.getInstance();
+
+
 
         public async Task<Image> Get(string id)
         {
@@ -46,6 +53,7 @@ namespace Pix_Api.Controllers
 
         public async Task<JsonResult<IQueryable<string>>> GetMultiple(string id, int amount)
         {
+            //Limit Query length.
             if (amount > MAX_QUERY_LENGTH)
             {
                 amount = MAX_QUERY_LENGTH;
@@ -80,6 +88,7 @@ namespace Pix_Api.Controllers
         {
             try
             {
+                //Read json here
                 var encoded = await Request.Content.ReadAsStringAsync();
                
                 var bytes = Convert.FromBase64String(encoded);
@@ -92,7 +101,22 @@ namespace Pix_Api.Controllers
 
                 //Gather attributes
                 string uid = (string) final["uid"];
+                string token = (string) final["token"];
                 string mime = (string) final["mime"];
+                //These must exist
+                try
+                {
+                    //Test
+                    pix_sec.Rules.Assert.AssertExists(uid, token, mime);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                    //Failed
+                    return null;
+                }
+
+
 
 
 
@@ -108,8 +132,7 @@ namespace Pix_Api.Controllers
                 //Generate PID
                 //p(encodedFirstTen)(uid skip3 then Ten)(Random 2 digit numb)(encodedreversedFive);
 
-                string picid = (string) "p" + encoded.Substring(0, 10) + uid.Substring(3, 10) +
-                               new Random().Next(10, 99) + encoded.Substring(50,5);
+                string picid = ID.GenPicId(uid);
 
                 Debug.WriteLine("\nCreated Pic:\n" + picid);
 
@@ -129,10 +152,11 @@ namespace Pix_Api.Controllers
                 Debug.WriteLine("DATECHECK => " + pic.CreationDay + " " + pic.CreationMonth +" ");
                 //Mandatory!
                 pic.Uid = uid;
+                pic.Token = token;
                 pic.Pid = picid;
                 pic.Location = path;
                 pic.Name = (string) final["name"];
-                //Everything else is optional, you can serialize it to the database now! 
+                //Everything else is optional
 
                 //Check for Location
                 if (final.ContainsKey("Lon"))
@@ -141,7 +165,12 @@ namespace Pix_Api.Controllers
                     pic.Lat = (string)final["Lat"];
 
                 }
-                await session.Add(pic);
+                //Verify that the pic is from the proper user. (In case of MITM)
+                var verified = await loginManger.VerifyPost(pic);
+                
+                //Add to database.
+                if(verified)
+                    await session.Add(pic);
 
                 //Return ok
                 return new OkResult(Request);

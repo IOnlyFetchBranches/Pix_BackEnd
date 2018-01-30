@@ -105,6 +105,19 @@ namespace pix_dtmodel.Connectors
             else
                 return results.AsQueryable();
         }
+        public async Task<IQueryable<T>> GetSomeAfterOffset(int offset, int limit)
+        {
+            Debug.WriteLine("Possibly Time Consuming Request <FindAll> ");
+            var results = await collection.Find(_ => true)
+                .Skip(offset).Limit(limit).ToListAsync();
+            Debug.WriteLine("Query returned " + results.Count + " results!");
+            if (results.Count == 0)
+            {
+                return null;
+            }
+            else
+                return results.AsQueryable();
+        }
 
         public async Task<IQueryable<T>> SortedGetSomeById(string id, string fieldToSortBy, int limit )
         {
@@ -130,11 +143,11 @@ namespace pix_dtmodel.Connectors
             return "success!";
         }
 
-        public async Task<bool> CheckFieldFrom(string caseSensitiveId, string field, string valueBeingCompared)
+        public async Task<bool> CheckFieldFrom(string key, string fieldToCheck, string valueBeingCompared)
         {
             try
             {
-                T find = await collection.Find(Builders<T>.Filter.Eq("_id", caseSensitiveId)).SingleAsync();
+                T find = await collection.Find(Builders<T>.Filter.Eq("_id", key)).SingleAsync();
            
             
             
@@ -142,7 +155,7 @@ namespace pix_dtmodel.Connectors
                     {
                         return false;
                     }   
-                bool good = find.ToBsonDocument()[field] == valueBeingCompared;
+                bool good = find.ToBsonDocument()[fieldToCheck] == valueBeingCompared;
                 return good;
             }
             catch (Exception e)
