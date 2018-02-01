@@ -19,17 +19,6 @@ namespace Tester
         static void Main(string[] args)
         {
 
-            string hashedPass =
-                BitConverter.ToString(new SHA256Managed().ComputeHash(Encoding.ASCII.GetBytes("LOLMYPASSWORD")));
-
-            Task<User> testUsr = login.CreateNewUser("llmuzical@gmail.com", hashedPass, "Muzical");
-
-
-            //Literally just wait for the callbacks lol
-            while (true)
-            {
-                Thread.Sleep(1000);
-            }
         }
     }
 }

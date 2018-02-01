@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -21,7 +22,7 @@ namespace pix_sec
         //Declare our new session, expecting and updating Users + Tokens
         private Session<pix_dtmodel.Models.User> userSession;
 
-        private Session<pix_dtmodel.Models.SessionToken> tokenSession;
+        
 
         //Database connection
         private IMongoDatabase database;
@@ -70,70 +71,60 @@ namespace pix_sec
 
         }
 
-        //Creates and returns new User by Email
-        public async Task<pix_dtmodel.Models.User> CreateNewUser(string email, string hashPass, string uname)
+
+
+        public async Task<pix_dtmodel.Models.User> LoginWithToken(string encodedToken)
         {
-            //Create model
-            pix_dtmodel.Models.User usr = new pix_dtmodel.Models.User();
-
-
-            //Set fields
-            usr.Uid = ID.GenUid(email); //GenUID
-
-            //Check backend for duplicates
-            if (userSession.GetRecordById(usr.Uid).Result != null)
+            try
             {
-                //If query that returned a result than the user is taken return error
-                return null;
+                var link = await auth.SignInWithCustomTokenAsync(encodedToken);
+
+               //If its valid, add to server if it doesnt exist or pull existing record
+
+                var user = await userSession.GetRecordById(Gen.ID.GenUid(link.User.Email));
+
+                if (user == null)
+                {
+                    //It doesnt exist so add it
+                    var newUser = new pix_dtmodel.Models.User();
+
+
+                    newUser.Email = link.User.Email;
+                    newUser.Uid = ID.GenUid(link.User.Email);
+                    newUser.Additional = null;
+                    newUser.First = link.User.FirstName;
+                    newUser.Last = link.User.LastName;
+                    newUser.Gid = link.User.FederatedId;
+                    newUser.Username = link.User.DisplayName;
+                    newUser.Verified = link.User.IsEmailVerified;
+
+                    userSession.Add(newUser);
+
+                    return newUser;
+
+                }
+                else
+                {
+                    return user;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("Error with token login! \n" +e);
+                throw e;
             }
 
-
-            //Always store email in lowercase
-            usr.Email = email.ToLower();
-            //Always store username in lowercase
-            usr.Username = uname.ToLower();
-
-            //Contact google boi
-            FirebaseAuthLink tempLink = await auth.CreateUserWithEmailAndPasswordAsync(email, hashPass, uname, true);
-            //Now we've issued a request to create a new account using the hashed password, email and then a verification email will hopefully be issued out.
-            usr.TimeLeft = tempLink.ExpiresIn + ""; //Expirary Date, refresh token when this gets too low.
-            //apply token.
-            usr.Token = tempLink.FirebaseToken;
-            //set hash
-            usr.HashWord = hashPass.Replace("-", String.Empty);
-            //set Google id.
-            usr.Gid = tempLink.User.LocalId;
-            //Finally add to dbase
-            await userSession.Add(usr);
-            await tokenSession.Add(new SessionToken()
-            {
-                Created = tempLink.Created.ToLongDateString(),
-                Expires = usr.TimeLeft,
-                Token = usr.Token
-            });
-
-
-
-            //debug line
-            Console.WriteLine("User " + uname + " expires in " + usr.TimeLeft);
-
-
-
-
-            return usr;
         }
 
-        //Refresh a session
-        public async Task<bool> VerifySession(SessionToken session)
-        {
-            return await tokenSession.CheckFieldFrom(session.Token, Defaults.Fields.Users.Uid, session.Uid);
-        }
+
+
+
 
         //Verifies Pics
         public async Task<bool> VerifyPost(Pic post)
         {
 
-            return await tokenSession.CheckFieldFrom(post.Token, Defaults.Fields.Users.Uid, post.Uid);
+            return  userSession.GetRecordById(post.Uid).Result != null;
 
 
 

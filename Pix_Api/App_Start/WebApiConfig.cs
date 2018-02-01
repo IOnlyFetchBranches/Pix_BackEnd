@@ -22,7 +22,12 @@ namespace Pix_Api
                 routeTemplate: "",
                 defaults: new { controller = "Root"}
             );
-
+            //PUT:TokenLogins POST: Nothing until site 
+            config.Routes.MapHttpRoute(
+                name: "TokenLogin",
+                routeTemplate: "api/login/token",
+                defaults: new { controller = "Login" }
+            );
 
 
 

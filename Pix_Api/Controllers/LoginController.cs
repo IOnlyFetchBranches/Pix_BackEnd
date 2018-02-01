@@ -1,18 +1,58 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using System.Web.Http;
-using Newtonsoft.Json;
+using pix_sec;
 
 namespace Pix_Api.Controllers
 {
     public class LoginController : ApiController
     {
-        [HttpPost]
+
+    
+        //New Login Method
+        [HttpPut]
+        public async Task<HttpResponseMessage> TokenLogin()
+        {
+            try
+            {
+                HttpResponseMessage okRes = new HttpResponseMessage(HttpStatusCode.Accepted);
+
+                //Load token 
+                var rawContent = await Request.Content.ReadAsStringAsync();
+
+                //Login
+                var user = LoginManager.getInstance().LoginWithToken(rawContent);
+
+                return okRes;
+            }catch(Exception e)
+            {
+                Debug.WriteLine(e.Message,"TokenLogin");
+
+                HttpResponseMessage errRess = new HttpResponseMessage(HttpStatusCode.BadRequest);
+                errRess.Content = new StringContent(e.Message);
+                return errRess;
+            }
+        }
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /*
         public  HttpResponseMessage CreateUser()
         {
             var res = new HttpResponseMessage(HttpStatusCode.Accepted);
@@ -44,5 +84,15 @@ namespace Pix_Api.Controllers
            
 
         }
+    
+
+    */
+
+
+
+
     }
+
+
+
 }
