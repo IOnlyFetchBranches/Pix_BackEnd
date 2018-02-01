@@ -71,6 +71,7 @@ namespace pix_sec
         }
 
         //Creates and returns new User by Email
+        
         public async Task<pix_dtmodel.Models.User> CreateNewUser(string email, string hashPass, string uname)
         {
             //Create model
@@ -86,7 +87,8 @@ namespace pix_sec
                 //If query that returned a result than the user is taken return error
                 return null;
             }
-
+            //Create secure hash.
+            hashPass = Hashing.SecureHash(hashPass);
 
             //Always store email in lowercase
             usr.Email = email.ToLower();
@@ -95,22 +97,27 @@ namespace pix_sec
 
             //Contact google boi
             FirebaseAuthLink tempLink = await auth.CreateUserWithEmailAndPasswordAsync(email, hashPass, uname, true);
+            
             //Now we've issued a request to create a new account using the hashed password, email and then a verification email will hopefully be issued out.
             usr.TimeLeft = tempLink.ExpiresIn + ""; //Expirary Date, refresh token when this gets too low.
             //apply token.
             usr.Token = tempLink.FirebaseToken;
             //set hash
-            usr.HashWord = hashPass.Replace("-", String.Empty);
+            usr.HashWord = hashPass;
             //set Google id.
             usr.Gid = tempLink.User.LocalId;
             //Finally add to dbase
             await userSession.Add(usr);
+
+
             await tokenSession.Add(new SessionToken()
             {
-                Created = tempLink.Created.ToLongDateString(),
-                Expires = usr.TimeLeft,
+                Created = tempLink.Created,
+                Expires = DateTime.Today.AddDays(Double.Parse(usr.TimeLeft)),
                 Token = usr.Token
             });
+
+            
 
 
 
@@ -123,10 +130,78 @@ namespace pix_sec
             return usr;
         }
 
+        public async Task<pix_dtmodel.Models.User> SignInUser(string email, string hashpass)
+        {
+            //At this point hashpass should be a single hashed b64
+            try
+            {
+                var link = await auth.SignInWithEmailAndPasswordAsync(email, hashpass);
+                var timeLeft = link.ExpiresIn;
+                var uid = Gen.ID.GenUid(link.User.Email.ToLower());
+
+                //retrieve user by id
+                return await userSession.GetRecordById(uid);
+
+            }
+            catch (Exception e)
+            {
+                return null;
+
+            }
+
+
+        }
+
+    
+
+        public async Task<string> getNewToken(SessionToken token , string email , string hash)
+        {
+            if (DateTime.Today.Month == token.Expires.Month
+                    && DateTime.Today.Day == token.Expires.Hour)
+                {
+                    var usr = await auth.SignInWithEmailAndPasswordAsync(email, hash);
+                    var newAuth = await usr.GetFreshAuthAsync();
+                    return newAuth.FirebaseToken;
+
+                }
+
+
+
+           
+        
+        }
+
+        public bool isExpired(SessionToken token)
+        {
+            if (DateTime.Today.Month == token.Expires.Month
+                && DateTime.Today.Day == token.Expires.Hour)
+            {
+                return true;
+            }
+
+            return false;
+
+        }
         //Refresh a session
         public async Task<bool> VerifySession(SessionToken session)
         {
             return await tokenSession.CheckFieldFrom(session.Token, Defaults.Fields.Users.Uid, session.Uid);
+        }
+
+        //Verify Token
+        public async Task<bool> VerifyToken(string token, string uid)
+        {
+            bool valid = await tokenSession.CheckFieldFrom(token, Defaults.Fields.Users.Uid, uid);
+            var cred = await tokenSession.GetRecordById(token);
+
+            if (isExpired(cred))
+            {
+                valid = false;
+            }
+            
+            
+
+            return valid;
         }
 
         //Verifies Pics
@@ -138,5 +213,8 @@ namespace pix_sec
 
 
         }
+
+
+        
     }
 }

@@ -31,6 +31,7 @@ namespace pix_dtmodel.Models
 
         public string Email { get; set; }
         
+        [BsonIgnore]
         public string HashWord { get; set; }
 
         public string Token { get; set; }

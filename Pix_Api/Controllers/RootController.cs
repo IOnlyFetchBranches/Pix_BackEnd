@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using pix_dtmodel.Models;
 using System.IO;
 using System.Net;
@@ -33,7 +34,7 @@ namespace Pix_Api.Controllers
                 var template = File.ReadAllText(ViewPath);
 
                 //use Razor to Parse it into proper html
-                var html = Razor.Parse(template, model);
+                var html = Razor.Parse(template);
 
 
                 res.Content = new StringContent(html);

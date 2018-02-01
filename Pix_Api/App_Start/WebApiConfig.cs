@@ -23,6 +23,25 @@ namespace Pix_Api
                 defaults: new { controller = "Root"}
             );
 
+            config.Routes.MapHttpRoute(
+                name: "LoginUser",
+                routeTemplate:"api/login",
+                defaults: new {controller = "Login"}
+            );
+
+
+            config.Routes.MapHttpRoute(
+                name: "NewUser",
+                routeTemplate: "api/login/create",
+                defaults: new { controller = "Login" }
+            );
+
+            config.Routes.MapHttpRoute(
+                name: "LoginToken",
+                routeTemplate: "api/login/{token}",
+                defaults: new { controller = "Login" }
+            );
+
 
 
 

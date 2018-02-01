@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
@@ -84,7 +85,7 @@ namespace Pix_Api.Controllers
 
         }
 
-        public async Task<IHttpActionResult> PostPicture()
+        public async Task<HttpResponseMessage> PostPicture()
         {
             try
             {
@@ -108,6 +109,15 @@ namespace Pix_Api.Controllers
                 {
                     //Test
                     pix_sec.Rules.Assert.AssertExists(uid, token, mime);
+                    //Verify
+                    bool Valid = await LoginManager.getInstance().VerifyToken(token,uid);
+
+                    if (!Valid)
+                    {
+                        var errRes = new HttpResponseMessage(HttpStatusCode.Unauthorized);
+                        errRes.Content = new StringContent("Provided Token is Invalid...");
+                        return errRes;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -129,8 +139,7 @@ namespace Pix_Api.Controllers
                 encoded = encoded.Replace("+", "");
                 encoded = encoded.Replace("=", "");
 
-                //Generate PID
-                //p(encodedFirstTen)(uid skip3 then Ten)(Random 2 digit numb)(encodedreversedFive);
+            
 
                 string picid = ID.GenPicId(uid);
 
@@ -165,6 +174,7 @@ namespace Pix_Api.Controllers
                     pic.Lat = (string)final["Lat"];
 
                 }
+
                 //Verify that the pic is from the proper user. (In case of MITM)
                 var verified = await loginManger.VerifyPost(pic);
                 
@@ -173,8 +183,16 @@ namespace Pix_Api.Controllers
                     await session.Add(pic);
 
                 //Return ok
-                return new OkResult(Request);
+                var okRes = new HttpResponseMessage(HttpStatusCode.Accepted);
 
+                //Respond with pic object.
+                var resJson = JsonConvert.SerializeObject(pic);
+
+                okRes.Content = new StringContent(resJson);
+
+                okRes.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+                return okRes;
 
 
 
@@ -182,10 +200,10 @@ namespace Pix_Api.Controllers
             catch (Exception e)
             {
                 //Return bad
-                Debug.WriteLine(e.Message);
-                
-                
-                return new BadRequestErrorMessageResult(e.Message,this);
+                var errRes = new HttpResponseMessage(HttpStatusCode.InternalServerError);
+                errRes.Content = new StringContent("Something bad happened...\nThat's all we know. :(");
+                Debug.WriteLine("Exception in pic post! \n"+e.Message + " ");
+                return errRes;
             }
 
         }

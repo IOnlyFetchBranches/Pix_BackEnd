@@ -99,7 +99,7 @@ namespace Pix_Backend
 
 
                 HttpClient client = new HttpClient();
-                client.BaseAddress = new UriBuilder("http://localhost:59107/").Uri;
+                client.BaseAddress = new UriBuilder("https://gopix.life/back/").Uri;
 
                 //Console.WriteLine(client.BaseAddress+postUrl);
 

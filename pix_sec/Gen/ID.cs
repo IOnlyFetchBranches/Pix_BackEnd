@@ -10,11 +10,16 @@ namespace pix_sec.Gen
       public abstract class ID
     {
 
+        
+
         //This class should gen all ids.
         
             //Use this to return a proper UID given an email
             public static string GenUid(string email)
             {
+
+                //Sanitize entry
+                email = email.ToLower();
                 //Make a hasher
                 SHA256 hasher = new SHA256Managed();
 
@@ -32,6 +37,12 @@ namespace pix_sec.Gen
 
                 return "USR" + hashString;
             }
+
+        //Return a proper uid given username 
+        public static string getUidFromUsername(string uname)
+        {
+            return null;
+        }
 
         public static string GenPicId(string uid)
         {

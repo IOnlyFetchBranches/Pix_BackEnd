@@ -10,6 +10,7 @@ using System.Web;
 using System.Web.Http;
 using System.Web.Http.Results;
 using MongoDB;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 using pix_dtmodel.Connectors;

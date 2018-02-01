@@ -14,8 +14,8 @@ namespace pix_dtmodel.Models
 
         public string Uid { get; set; }
 
-        public string Created { get; set; }
-        public string Expires { get; set; }
+        public DateTime Created { get; set; }
+        public DateTime Expires { get; set; }
         
     }
 }
