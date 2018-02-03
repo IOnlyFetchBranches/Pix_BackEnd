@@ -96,11 +96,11 @@ namespace Pix_Api.Controllers
 
 
                 }
-                
 
 
 
-                okRes.Content = new StringContent(pix_sec.Gen.Packager.CreateAuthPackage(resContent));
+                //pix_sec.Gen.Packager.CreateAuthPackage(resContent)
+                okRes.Content = new StringContent("done");
 
 
                 //Respond if all went ok
