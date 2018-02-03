@@ -29,10 +29,6 @@ namespace Pix_Api.Controllers
 
         //Open a connection with the Pic collection
         private static Session<Pic> session = new Session<Pic>(database, Defaults.Collections.Pics);
-        //Grab the login manager to verify users.
-        private static LoginManager loginManger = LoginManager.getInstance();
-
-
 
         public async Task<Image> Get(string id)
         {
@@ -101,13 +97,13 @@ namespace Pix_Api.Controllers
 
                 //Gather attributes
                 string uid = (string) final["uid"];
-                string token = (string) final["token"];
+                string gid = (string) final["gid"]; //This will now be a gid.
                 string mime = (string) final["mime"];
                 //These must exist
                 try
                 {
                     //Test
-                    pix_sec.Rules.Assert.AssertExists(uid, token, mime);
+                    pix_sec.Rules.Assert.AssertExists(uid, gid, mime);
                 }
                 catch (Exception e)
                 {
@@ -152,7 +148,7 @@ namespace Pix_Api.Controllers
                 Debug.WriteLine("DATECHECK => " + pic.CreationDay + " " + pic.CreationMonth +" ");
                 //Mandatory!
                 pic.Uid = uid;
-                pic.Token = token;
+                pic.Gid = gid; //This used to be token
                 pic.Pid = picid;
                 pic.Location = path;
                 pic.Name = (string) final["name"];
@@ -166,7 +162,8 @@ namespace Pix_Api.Controllers
 
                 }
                 //Verify that the pic is from the proper user. (In case of MITM)
-                var verified = await loginManger.VerifyPost(pic);
+                var verified = await pix_sec.Rules.Verify.CheckUser(new SessionToken() {Gid = gid, Uid = uid});
+            
                 
                 //Add to database.
                 if(verified)

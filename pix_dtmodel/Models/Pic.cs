@@ -20,7 +20,7 @@ namespace pix_dtmodel.Models
         [BsonElement("_id")] //Pid needs to be our indexed field
         public string Pid{ get; set;}
         public string Uid { get; set; }
-        public string Token { get; set; }
+        public string Gid { get; set; }
         public string Location { get; set; }
         //Set name
         public string Name { get; set; }

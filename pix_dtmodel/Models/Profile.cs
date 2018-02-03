@@ -12,17 +12,7 @@ namespace pix_dtmodel.Models
     public class Profile
     {
         [BsonElement("_id")]
-        public string UID { get; set; }
-        public class Name
-        {
-
-            //First, Last, Additional properties
-            public string First { get; set; }
-            public string Last { get; set; }
-
-            [BsonIgnoreIfNull]
-            public string[] Additional { get; set; }
-        }
+        public string Uid { get; set; }
 
         public string Username { get; set; }
 
@@ -33,20 +23,14 @@ namespace pix_dtmodel.Models
             set => email = "Ignored!";
         }
 
-        private string hashword;
+        
 
-        public string HashWord
+        private string gid;
+
+        public string Gid
         {
             get => "Bad Context";
-            set => hashword = "Ignored!";
-        }
-
-        private string token;
-
-        public string Token
-        {
-            get => "Bad Context";
-            set => token = "Ignored";
+            set => gid = "Ignored";
         }
 
         public string Status { get; set; }
@@ -62,11 +46,8 @@ namespace pix_dtmodel.Models
 
         [BsonIgnoreIfNull]
         public string BanReason { get; set; }
-        [BsonIgnoreIfNull]
-        public string TimeLeft { get; set; }
-
-        [BsonIgnoreIfNull]
-        public string Gid { get; set; } //Google id
+        
+       
 
     }
 }
