@@ -125,10 +125,11 @@
   <ItemGroup>
     <Compile Include="Gen\Hashing.cs" />
     <Compile Include="Gen\ID.cs" />
-    <Compile Include="Managers\LoginManager.cs" />
+    <Compile Include="Gen\Packager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rules\Assert.cs" />
     <Compile Include="Rules\Text.cs" />
+    <Compile Include="Rules\Verify.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\pix_dtmodel\pix_dtmodel.csproj">
@@ -140,6 +141,8 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Managers\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
