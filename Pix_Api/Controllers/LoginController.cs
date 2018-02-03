@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -31,15 +32,25 @@ namespace Pix_Api.Controllers
         private static Session<SessionToken> credSession = new Session<SessionToken>(database, Defaults.Collections.SessionData);
 
         //New Login Method
+    
         [HttpPost]
-        public async Task<HttpResponseMessage> TokenLogin()
+        public async Task<HttpResponseMessage> PostToken()
         {
 
            
             try
             {
+
+
+
+
                 //Load token 
                 var rawContent = await Request.Content.ReadAsStringAsync();
+
+                //Log
+                Directory.CreateDirectory("C:\\Logs\\");
+                var logOut = File.CreateText("C:\\Logs\\log.txt");
+                logOut.Write(rawContent);
                 
                 var set = new Firebase.Auth.FirebaseConfig("AIzaSyBAbtFrjxR-dDNIVnSa1ilJEsE3XQuVVEQ");
 
@@ -100,7 +111,7 @@ namespace Pix_Api.Controllers
 
 
                 //pix_sec.Gen.Packager.CreateAuthPackage(resContent)
-                okRes.Content = new StringContent("done");
+                okRes.Content = new StringContent(pix_sec.Gen.Packager.CreateAuthPackage(resContent));
 
 
                 //Respond if all went ok
@@ -115,25 +126,17 @@ namespace Pix_Api.Controllers
             }
         }
 
+
         [HttpGet]
         public async Task<HttpResponseMessage> Get()
         {
-            try
-            {
-                HttpResponseMessage okRes = new HttpResponseMessage(HttpStatusCode.Accepted);
-
-            
-                return okRes;
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.Message, "TokenLogin");
-
-                HttpResponseMessage errRess = new HttpResponseMessage(HttpStatusCode.BadRequest);
-                errRess.Content = new StringContent(e.Message);
-                return errRess;
-            }
+            var res = new HttpResponseMessage(HttpStatusCode.Accepted);
+            res.Content = new StringContent(await Request.Content.ReadAsStringAsync());
+            return res;
         }
+
+        
+        
 
 
 

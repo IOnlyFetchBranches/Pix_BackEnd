@@ -24,8 +24,14 @@ namespace Pix_Api
             );
             //PUT:TokenLogins POST: Nothing until site 
             config.Routes.MapHttpRoute(
-                name: "TokenLogin",
+                name: "PostToken",
                 routeTemplate: "api/login/token",
+                defaults: new { controller = "Login" }
+            );
+
+            config.Routes.MapHttpRoute(
+                name: "Get",
+                routeTemplate: "api/login/",
                 defaults: new { controller = "Login" }
             );
 
