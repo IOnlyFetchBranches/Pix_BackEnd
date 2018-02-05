@@ -45,7 +45,7 @@ namespace Pix_Api
             config.Routes.MapHttpRoute(
                 name: "UserGetAll",
                 routeTemplate: "users/limit/{limit}",
-                defaults: new { controller = "User" ,use = false, limit = 10}
+                defaults: new { controller = "User" , limit = 10}
             );
 
             
@@ -57,9 +57,15 @@ namespace Pix_Api
             );
 
             config.Routes.MapHttpRoute(
-                name: "GetPicsFromUserByIndex",
+                name: "GetPicsFromUserByPage",
                 routeTemplate: "pics/{uid}/{pagenum}/{itemsperpage}",
                 defaults: new {controller = "Pics", itemsperpage = 10, pagenum = 1}
+            );
+
+            config.Routes.MapHttpRoute(
+                name: "GetPicsFromUsersByPage",
+                routeTemplate: "pics/{pagenum}/{itemsperpage}",
+                defaults: new { controller = "Pics", itemsperpage = 10, pagenum = 1 }
             );
 
             config.Routes.MapHttpRoute(

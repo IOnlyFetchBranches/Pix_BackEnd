@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
@@ -12,7 +13,9 @@ namespace pix_dtmodel.Models
     public class Profile
     {
         [BsonElement("_id")]
-        public string Uid { get; set; }
+        [BsonDefaultValue("Bad Context")]
+    
+        public string Uid { set; get; }
 
         public string Username { get; set; }
 
@@ -26,7 +29,12 @@ namespace pix_dtmodel.Models
         [BsonIgnoreIfNull]
         public string First { get; set; }
 
-        [BsonIgnoreIfNull] public string Last;
+        [BsonIgnoreIfNull]
+        public string Last { get; set; }
+
+        [BsonIgnoreIfNull]
+        public bool Verified { get; set; }
+
 
         
 
@@ -38,20 +46,9 @@ namespace pix_dtmodel.Models
             set => gid = "Ignored";
         }
 
-        public string Status { get; set; }
+       
+       
 
-        private bool isBanned = true;
-
-        [BsonIgnoreIfNull]
-        public bool IsBanned
-        {
-            get => isBanned;
-            set => isBanned = value;
-        }
-
-        [BsonIgnoreIfNull]
-        public string BanReason { get; set; }
-        
        
 
     }

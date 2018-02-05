@@ -32,53 +32,30 @@ namespace Pix_Api.Controllers
 
       private readonly int MAX_QUERY_PAGE_SIZE = 100; //The max a single page request can pull per page.
 
-        public  async Task<JsonResult<IQueryable<Profile>>> Get(bool use,int limit)
+
+        [ActionName("UserGetAll")]
+        public  async Task<JsonResult<IQueryable<Profile>>> Get(int limit)
       {
 
           
           var settings = new JsonSerializerSettings();
 
-            //Null List
-          baseProf.Username = "NULL LIST";
-          List<Profile> emptyList = new List<Profile>()
-          {
-              baseProf
-          };
-
-
-
-
             //If limited
-            if (use)
-          {
+          
               if (limit > MAX_QUERY_ITEM_COUNT)
               {
                   limit = MAX_QUERY_ITEM_COUNT;
               }
-                 var results = await session.GetAll(limit);
-              var returnable = results != null;
-              if(returnable)
-                return new JsonResult<IQueryable<Profile>>(results.Take(limit), settings, Encoding.ASCII, Request);
-              else
-              {
-                  return new JsonResult<IQueryable<Profile>>(emptyList.AsQueryable(), settings, Encoding.ASCII, Request);
-                }
+
+            var results = await session.GetAll(limit);
+            return new JsonResult<IQueryable<Profile>>(results, settings, Encoding.ASCII, Request);
+            
             }
 
-
-          var dResults = await session.GetAll(limit);
-          var empty = dResults != null;
-            
-          if(!empty)
-            return new JsonResult<IQueryable<Profile>>(dResults.Take(MAX_QUERY_ITEM_COUNT), settings, Encoding.ASCII, Request );
-          else
-          {
-             
-              return new JsonResult<IQueryable<Profile>>(emptyList.AsQueryable(),settings,Encoding.ASCII, Request);
-          }
+          
 
 
-      }
+      
 
     
 

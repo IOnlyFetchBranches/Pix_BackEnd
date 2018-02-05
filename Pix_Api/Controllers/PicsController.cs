@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.Results;
+using System.Web.Mvc;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 using pix_dtmodel.Connectors;
@@ -78,6 +79,13 @@ namespace Pix_Api.Controllers
                     return null;
             }
 
+        }
+
+        //Returns a json result of a querable of json strings...
+        [System.Web.Http.ActionName("GetPicsFromUsersByPage")]
+        public async Task<JsonResult<IQueryable<string>>> GetPicsFromUsersByPage(long pagenum, long size)
+        {
+            return null;
         }
 
         public async Task<IHttpActionResult> PostPicture()

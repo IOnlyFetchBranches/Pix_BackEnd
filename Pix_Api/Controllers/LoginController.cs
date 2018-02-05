@@ -52,7 +52,8 @@ namespace Pix_Api.Controllers
 
             
                 
-
+                //Get time
+                var beginTime = DateTime.Now;
 
                 
 
@@ -132,11 +133,13 @@ namespace Pix_Api.Controllers
                         Verified = bool.Parse(authPack["email_verified"])
 
                     };
+
+
                     isNewUser = true; //This will ('Should') signal client to request and then post a New Username.
 
 
 
-                    authPack.Add("isNewUser", isNewUser + "");
+                   
 
 
                     Logger.Log("Adding to backend...", LogFile);
@@ -158,6 +161,15 @@ namespace Pix_Api.Controllers
 
 
                 }
+
+                
+                
+                //Get final time
+                var timeTaken = (beginTime - DateTime.Now).Milliseconds;
+
+                //Add server messages here
+                authPack.Add("isNewUser", isNewUser + "");
+                authPack.Add("requestTime", timeTaken +"ms");
 
 
                 Logger.Log("Building Response...", LogFile);

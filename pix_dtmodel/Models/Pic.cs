@@ -25,7 +25,12 @@ namespace pix_dtmodel.Models
         //Set name
         public string Name { get; set; }
 
-        //End of Required Fields.
+        //End of Required Fields for database
+
+        //Data payload [Filled by controller i/o at time of request]
+        [BsonIgnore]
+        public string B64Data { get; set; }
+        
 
 
 
