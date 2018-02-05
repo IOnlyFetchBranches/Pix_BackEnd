@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,16 +12,32 @@ namespace pix_sec.Gen
     public abstract class Packager
     {
 
-        public static string CreateAuthPackage(IDictionary<string, string> verifiedToken)
+        public static string CreateAuthPackage(IDictionary<string, string> verifiedToken, FileStream logFile)
         {
-            Dictionary<string, string> authPackage = new Dictionary<string, string>();
+            if (logFile != null)
+            {
 
-            authPackage.Add("gid", verifiedToken["gid"]);
-            authPackage.Add("uid", Gen.ID.GenUid(verifiedToken["email"]));
-            authPackage.Add("email", verifiedToken["email"]);
-            authPackage.Add("email_verified",verifiedToken["email_verified"]);
+                Dictionary<string, string> authPackage = new Dictionary<string, string>();
+                
+                authPackage.Add("gid", verifiedToken["gid"]);
+                authPackage.Add("uid", Gen.ID.GenUid(verifiedToken["email"]));
+                authPackage.Add("email", verifiedToken["email"]);
+                authPackage.Add("email_verified", verifiedToken["email_verified"]);
 
-            return JsonConvert.SerializeObject(authPackage);
+                return JsonConvert.SerializeObject(authPackage);
+
+            }
+            else
+            {
+                Dictionary<string, string> authPackage = new Dictionary<string, string>();
+
+                authPackage.Add("gid", verifiedToken["gid"]);
+                authPackage.Add("uid", Gen.ID.GenUid(verifiedToken["email"]));
+                authPackage.Add("email", verifiedToken["email"]);
+                authPackage.Add("email_verified", verifiedToken["email_verified"]);
+
+                return JsonConvert.SerializeObject(authPackage);
+            }
         }
     }
 }

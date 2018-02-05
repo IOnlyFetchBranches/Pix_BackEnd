@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace pix_dtmodel.Managers.Firebase
     using Newtonsoft.Json;
     using System.Security.Cryptography.X509Certificates;
     using System.Security.Cryptography;
+    using Util;
 
     public class FirebaseJWTAuth
     {
@@ -30,71 +32,134 @@ namespace pix_dtmodel.Managers.Firebase
             Req.BaseAddress = new Uri("https://www.googleapis.com/robot/v1/metadata/");
         }
 
+        private static string CurrentB64;
         public async Task<Dictionary<string,string>> Verify(string token)
         {
-            //following instructions from https://firebase.google.com/docs/auth/admin/verify-id-tokens
-            string hashChunk = token; //keep for hashing later on
-            hashChunk = hashChunk.Substring(0, hashChunk.LastIndexOf('.'));
-            token = token.Replace('-', '+').Replace('_', '/'); //sanitize for base64 on C#
-            string[] sections = token.Split('.'); //split into 3 sections according to JWT standards
-            JwtHeader header = B64Json<JwtHeader>(sections[0]);
-
-            if (header.alg != "RS256")
+            try
             {
-                return null;
-            }
+                //Setup Logging
+                //Create Dir if it doesnt exist
+                Directory.CreateDirectory("C:\\DebugLogs\\Verification\\");
 
-            HttpResponseMessage res = await Req.GetAsync("x509/securetoken@system.gserviceaccount.com");
-            string keyDictStr = await res.Content.ReadAsStringAsync();
-            Dictionary<string, string> keyDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(keyDictStr);
-            string keyStr = null;
-            keyDict.TryGetValue(header.kid, out keyStr);
-            if (keyStr == null)
-            {
-                return null;
-            }
+                //Open LogFile
+                var LogFile = new FileStream("C:\\DebugLogs\\Verification\\" + "log" + DateTime.Now.ToString("MM-dd-yyyy") + "-"
+                                             + DateTime.Now.ToString("h-mm-ss") + " " + DateTime.Now.Millisecond + ".txt",
+                    FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
 
-            using (var rsaCrypto = CertFromPem(keyStr))
-            {
-                using (var hasher = SHA256Managed.Create())
+
+
+
+                //following instructions from https://firebase.google.com/docs/auth/admin/verify-id-tokens
+                string hashChunk = token; //keep for hashing later on
+                hashChunk = hashChunk.Substring(0, hashChunk.LastIndexOf('.'));
+                token = token.Replace('-', '+').Replace('_', '/'); //sanitize for base64 on C#
+                DtLogger.Log("Sanitization [1]",LogFile);
+                string[] sections = token.Split('.'); //split into 3 sections according to JWT standards
+                DtLogger.Log("Split...", LogFile);
+                JwtHeader header = B64Json<JwtHeader>(sections[0]);
+
+                DtLogger.Log("Got Header.", LogFile);
+
+
+                if (header.alg != "RS256")
                 {
-                    byte[] plainText = Encoding.UTF8.GetBytes(hashChunk);
-                    byte[] hashed = hasher.ComputeHash(plainText);
+                    DtLogger.Log("Incorrect Alg In Header!", LogFile);
+                    LogFile.Dispose();
+                    return null;
+                }
 
-                    byte[] challenge = SafeB64Decode(sections[2]);
+                DtLogger.Log("Header Good.", LogFile);
 
-                    RSAPKCS1SignatureDeformatter rsaDeformatter = new RSAPKCS1SignatureDeformatter(rsaCrypto);
-                    rsaDeformatter.SetHashAlgorithm("SHA256");
-                    if (!rsaDeformatter.VerifySignature(hashed, challenge))
-                    {
-                        return null;
+                DtLogger.Log("Pulling Keys...", LogFile);
+                HttpResponseMessage res = await Req.GetAsync("x509/securetoken@system.gserviceaccount.com");
+                DtLogger.Log("Done!", LogFile);
+                string keyDictStr = await res.Content.ReadAsStringAsync();
+                DtLogger.Log("Reading keys...", LogFile);
+                Dictionary<string, string> keyDict =
+                    JsonConvert.DeserializeObject<Dictionary<string, string>>(keyDictStr);
+                DtLogger.Log("Done.", LogFile);
+                string keyStr = null;
+                keyDict.TryGetValue(header.kid, out keyStr);
+                if (keyStr == null)
+                {
+                    DtLogger.Log("No Matching Key Was Found...", LogFile);
+                    LogFile.Dispose();
+                    return null;
+                }
+
+                DtLogger.Log("Processing Challenge...", LogFile);
+                using (var rsaCrypto = CertFromPem(keyStr))
+                {
+                    using (var hasher = SHA256Managed.Create())
+                    {   
+                        
+                        byte[] plainText = Encoding.UTF8.GetBytes(hashChunk);
+                        byte[] hashed = hasher.ComputeHash(plainText);
+
+                        DtLogger.Log("Decoding...", LogFile);
+                        byte[] challenge = SafeB64Decode(sections[2]);
+                        DtLogger.Log("Done.", LogFile);
+
+                        RSAPKCS1SignatureDeformatter rsaDeformatter = new RSAPKCS1SignatureDeformatter(rsaCrypto);
+                        rsaDeformatter.SetHashAlgorithm("SHA256");
+                        if (!rsaDeformatter.VerifySignature(hashed, challenge))
+                        {
+                            DtLogger.Log("Signature Verification Failed!", LogFile);
+                            return null;
+                        }
                     }
                 }
-            }
 
-            JwtPayload payload = B64Json<JwtPayload>(sections[1]);
-            long currentTime = EpochSec();
-            //the if chain of death
-            if (payload.aud != FirebaseId ||
-             payload.iss != "https://securetoken.google.com/" + FirebaseId ||
-             payload.iat >= currentTime ||
-             payload.exp <= currentTime)
+                JwtPayload payload = B64Json<JwtPayload>(sections[1]);
+                long currentTime = EpochSec();
+                //the if chain of death
+                if (payload.aud != FirebaseId ||
+                    payload.iss != "https://securetoken.google.com/" + FirebaseId ||
+                    //Was checking for >= but on super fast days you could get an iat = to the server date
+                    //Transfer from google to my server happens under a second and invalidates a good token.
+                    payload.iat > currentTime ||
+                    payload.exp <= currentTime)
+                {
+                    DtLogger.Log("Payload verification failure.", LogFile);
+                    DtLogger.Log(
+                        "Condition checks [aud,iss,iat,exp] : \n"
+                        + (payload.aud != FirebaseId) +"\n" 
+                        + (payload.iss != "https://securetoken.google.com/" + FirebaseId )+ "\n"
+                        + (payload.iat >= currentTime)  +" [" +payload.iat + "? >" + currentTime +"]" + "\n"
+                        + (payload.exp <= currentTime), LogFile);
+                    LogFile.Dispose();
+                    return null;
+                }
+
+
+
+
+                DtLogger.Log("Verification success, attempt to get gid: \n\t" +payload.sub, LogFile);
+                //Grab payload details and return.
+
+                
+                DtLogger.Log("Attempt to create response package...", LogFile);
+                Dictionary<string, string> dict = new Dictionary<string, string>();
+
+                DtLogger.Log("Adding gid...", LogFile);
+                dict.Add("gid", payload.sub);
+                DtLogger.Log("Adding email...", LogFile);
+                dict.Add("email", payload.email);
+                DtLogger.Log("Adding status...", LogFile);
+                dict.Add("email_verified", payload.email_verified);
+
+                DtLogger.Log("Done.", LogFile);
+
+                DtLogger.Log("Returning! dict exists = " + (dict != null), LogFile);
+                
+                LogFile.Dispose();
+                return dict;
+            }
+            catch (Exception e)
             {
-                return null;
+
+                throw new Exception(e.Message + "\n" +CurrentB64);
             }
-
-          
-            //Grab payload details and return.
-
-            Dictionary<string, string> dict = new Dictionary<string, string>();
-
-
-            dict.Add("gid", payload.sub);
-            dict.Add("email", payload.email);
-            dict.Add("email_verified",payload.email_verified);
-
-
-            return dict;
 
 
         }
@@ -119,9 +184,26 @@ namespace pix_dtmodel.Managers.Firebase
                 {
                     string newEncodedPad =
                         newEncoded + new string('=', 4 - newEncoded.Length % 4); //'=', 4 - encoded.Length % 4
+                    CurrentB64 = newEncodedPad+ " Pad";
                     return Convert.FromBase64String(newEncodedPad);
                 }
+                CurrentB64 = newEncoded +" NonPad";
+                return Convert.FromBase64String(newEncoded);
+            }
 
+            if (encoded.Contains("data="))
+            {
+                var newEncoded =
+                    encoded.Replace("data=",
+                        ""); // encoded.Replace("\r\n", "") + new string('=', 4 - encoded.Length % 4)
+                if (newEncoded.Length % 4 != 0)
+                {
+                    string newEncodedPad =
+                        newEncoded + new string('=', 4 - newEncoded.Length % 4); //'=', 4 - encoded.Length % 4
+                    CurrentB64 = newEncodedPad + " Data = caught  + Pad";
+                    return Convert.FromBase64String(newEncodedPad);
+                }
+                CurrentB64 = newEncoded + "Data = caught but NonPad";
                 return Convert.FromBase64String(newEncoded);
             }
 
@@ -131,10 +213,12 @@ namespace pix_dtmodel.Managers.Firebase
                 {
                     string encodedPad =
                         encoded + new string('=', 4 - encoded.Length % 4); //'=', 4 - encoded.Length % 4
-                    return Convert.FromBase64String(encodedPad);
+                    CurrentB64 = encodedPad + " NonBadEnd Pad";
+                return Convert.FromBase64String(encodedPad);
                 }
 
-                // Console.WriteLine(encodedPad);
+            // Console.WriteLine(encodedPad);
+            CurrentB64 = encoded + " NonBadEnd NonPad";
             return Convert.FromBase64String(encoded);
 
         }

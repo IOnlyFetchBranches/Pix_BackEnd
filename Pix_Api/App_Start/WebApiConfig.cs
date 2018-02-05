@@ -25,13 +25,13 @@ namespace Pix_Api
             //PUT:TokenLogins POST: Nothing until site 
             config.Routes.MapHttpRoute(
                 name: "PostToken",
-                routeTemplate: "api/login/token",
+                routeTemplate: "login/token",
                 defaults: new { controller = "Login" }
             );
 
             config.Routes.MapHttpRoute(
                 name: "Get",
-                routeTemplate: "api/login/",
+                routeTemplate: "login/",
                 defaults: new { controller = "Login" }
             );
 
@@ -39,32 +39,32 @@ namespace Pix_Api
 
             config.Routes.MapHttpRoute(
                 name: "UserGetById",
-                routeTemplate: "api/users/id/{id}",
+                routeTemplate: "users/id/{id}",
                 defaults: new { controller = "User", }
             );
             config.Routes.MapHttpRoute(
                 name: "UserGetAll",
-                routeTemplate: "api/users/limit/{limit}",
+                routeTemplate: "users/limit/{limit}",
                 defaults: new { controller = "User" ,use = false, limit = 10}
             );
 
             
             config.Routes.MapHttpRoute(
                 name: "GetUsersByPage",
-                routeTemplate: "api/users/{pagenum}/{itemsperpage}",
+                routeTemplate: "users/page/{pagenum}/{itemsperpage}",
                 defaults: new {controller = "User", itemsperpage = 10, pagenum = 1}
                 
             );
 
             config.Routes.MapHttpRoute(
                 name: "GetPicsFromUserByIndex",
-                routeTemplate: "api/pics/{uid}/{pagenum}/{itemsperpage}",
+                routeTemplate: "pics/{uid}/{pagenum}/{itemsperpage}",
                 defaults: new {controller = "Pics", itemsperpage = 10, pagenum = 1}
             );
 
             config.Routes.MapHttpRoute(
                 name: "PostPicture",
-                routeTemplate: "api/pics/post/create",
+                routeTemplate: "pics/post/create",
                 defaults: new {controller = "Pics"}
             );
             

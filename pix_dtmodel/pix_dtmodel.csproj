@@ -74,6 +74,7 @@
     <Compile Include="Models\Tags\Meta.cs" />
     <Compile Include="Models\Pic.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Util\DtLogger.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

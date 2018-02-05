@@ -125,6 +125,7 @@
   <ItemGroup>
     <Compile Include="Gen\Hashing.cs" />
     <Compile Include="Gen\ID.cs" />
+    <Compile Include="Gen\Logger.cs" />
     <Compile Include="Gen\Packager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rules\Assert.cs" />

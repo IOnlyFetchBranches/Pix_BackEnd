@@ -11,11 +11,14 @@ namespace pix_dtmodel.Models
     [Serializable]
     public class SystemRecord
     {
+        
         [BsonElement("_id")]
         public string Type { get; set; }
+        [BsonIgnoreIfNull]
         [BsonElement("data")]
         public string Data { get; set; }
 
+        
         [Serializable]
         public class Cred
         {

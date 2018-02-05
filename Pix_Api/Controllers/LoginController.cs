@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
@@ -18,6 +19,7 @@ using pix_dtmodel.Connectors;
 using pix_dtmodel.Managers;
 using pix_dtmodel.Models;
 using pix_sec;
+using pix_sec.Gen;
 using JsonConvert = Newtonsoft.Json.JsonConvert;
 
 namespace Pix_Api.Controllers
@@ -32,52 +34,90 @@ namespace Pix_Api.Controllers
         private static Session<SessionToken> credSession = new Session<SessionToken>(database, Defaults.Collections.SessionData);
 
         //New Login Method
+        //Object reference not set == Verify Failure.... Incorect Token!
     
         [HttpPost]
         public async Task<HttpResponseMessage> PostToken()
         {
+            //Open LogFile
+            var LogFile = new FileStream("C:\\DebugLogs\\" + "log" + DateTime.Now.ToString("MM-dd-yyyy") + "-" 
+                + DateTime.Now.ToString("h-mm-ss") +  " " +DateTime.Now.Millisecond + ".txt", 
+                        FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.Read);
 
-           
+            var bytes = await Request.Content.ReadAsByteArrayAsync();
+
+
             try
             {
 
+            
+                
 
+
+                
 
 
                 //Load token 
-                var rawContent = await Request.Content.ReadAsStringAsync();
+                var rawContent = Encoding.UTF8.GetString(bytes);
+
+                //Sanitize (if neccesary)
+                if (rawContent.Contains("data="))
+                    rawContent = rawContent.Replace("data=", "");
 
                 //Log
-                Directory.CreateDirectory("C:\\Logs\\");
-                var logOut = File.CreateText("C:\\Logs\\log.txt");
-                logOut.Write(rawContent);
-                
-                var set = new Firebase.Auth.FirebaseConfig("AIzaSyBAbtFrjxR-dDNIVnSa1ilJEsE3XQuVVEQ");
+                Logger.Log(rawContent, LogFile);
+
+                //log LOGLOG log!!L!O!G! [It helps my sanity <3]
+                Logger.Log("Loaded Data!",LogFile);
+
+                Logger.Log("Grabbing Key...", LogFile);
+                var set = new Firebase.Auth.FirebaseConfig( await Defaults.System.GetApiKey());
+                Logger.Log("Loaded Key!", LogFile);
+
 
                 var auth = new Firebase.Auth.FirebaseAuthProvider(set);
+
+                Logger.Log("Init Firebase Auth...", LogFile);
 
                 var tokenManager = new pix_dtmodel.Managers.Firebase.FirebaseJWTAuth(
                     "pix-55e76");
 
+                Logger.Log("Verifying Token...",LogFile);
                 var resContent = await tokenManager.Verify(rawContent);
 
+                if (resContent != null)
+                    Logger.Log("Token Verified!", LogFile);
+                else
+                {
+                    throw new Exception("Was unable to parse the response token!");
+                }
 
 
 
-               
+
                 HttpResponseMessage okRes = new HttpResponseMessage(HttpStatusCode.Accepted);
                 //okRes.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
 
-                
+                Logger.Log("Building Message Pack with: \n" + pix_sec.Gen.Packager.CreateAuthPackage(resContent,LogFile), LogFile);
+
 
                 //Get the auth package
-                var authPack = JsonConvert.DeserializeObject<Dictionary<string,string>>
-                    (pix_sec.Gen.Packager.CreateAuthPackage(resContent));
+                var authPack = resContent;
 
+            
+                
+
+
+
+                Logger.Log("Done!", LogFile);
+
+
+                bool isNewUser = false;
                 //Check the backend
                 if ( await credSession.GetRecordById(authPack["gid"]) == null)
                 {
+                    Logger.Log("Generating New User...", LogFile);
                     //if it doesnt exist [First time login] Create the records
 
                     User newUser = new User()
@@ -88,12 +128,22 @@ namespace Pix_Api.Controllers
                         Gid = authPack["gid"],
                         Last = "",
                         Uid = pix_sec.Gen.ID.GenUid(authPack["email"]),
-                        Username = null,
+                        Username = "", // Ask for it later...
                         Verified = bool.Parse(authPack["email_verified"])
-                    };
 
+                    };
+                    isNewUser = true; //This will ('Should') signal client to request and then post a New Username.
+
+
+
+                    authPack.Add("isNewUser", isNewUser + "");
+
+
+                    Logger.Log("Adding to backend...", LogFile);
                     //Add to backend
                     userSession.Add(newUser);
+
+                    Logger.Log("User Added!", LogFile);
 
                     //Create session token for quick lookup + Add to backend.
 
@@ -104,24 +154,52 @@ namespace Pix_Api.Controllers
                     });
 
                     //Done.
+                    
 
 
                 }
 
 
+                Logger.Log("Building Response...", LogFile);
+
 
                 //pix_sec.Gen.Packager.CreateAuthPackage(resContent)
-                okRes.Content = new StringContent(pix_sec.Gen.Packager.CreateAuthPackage(resContent));
+                try
+                {
+                    okRes.Content = new StringContent(JsonConvert.SerializeObject(authPack));
+                    Logger.Log("Sent!", LogFile);
 
+                    //Done
+                    LogFile.Close();
+                    //Respond all went ok
+                    return okRes;
 
-                //Respond if all went ok
-                return okRes;
+                    
+                }
+                catch (Exception e)
+                {
+                    HttpResponseMessage errRess = new HttpResponseMessage(HttpStatusCode.Continue);
+                    errRess.Content = new StringContent(e.Message);
+                    Logger.Log("An Error Occured, But user is verified..." + e.Message, LogFile);
+                    LogFile.Close();
+                    return errRess;
+                }
+
+                
+                
+              
             }catch(Exception e)
             {
+
+
+                //close (Could be condensed into a using!)
+                
                 Debug.WriteLine(e.Message,"TokenLogin");
 
                 HttpResponseMessage errRess = new HttpResponseMessage(HttpStatusCode.BadRequest);
                 errRess.Content = new StringContent(e.Message);
+                Logger.Log("An Error Occured :( /n" +e.Message, LogFile);
+                LogFile.Close();
                 return errRess;
             }
         }

@@ -13,7 +13,7 @@ namespace pix_dtmodel.Models
     {
         public class ConnectionStrings
         {
-            public static string Localhost => "mongodb://localhost";
+            public static string Localhost => "mongodb://localhost:27017";
         }
 
         public class DatabaseNames
@@ -74,17 +74,16 @@ namespace pix_dtmodel.Models
         //Directories, Keys,etc
         public class System
         {
-            private static string apikey;
+            private static string apikey = null;
             //Dynamically gets ApiKey From Mongod
-            public static string ApiKey
-            {
-                get
-                {
+            public static async Task<string> GetApiKey()
+            { 
                     if (apikey == null)
                     {
-                        apikey = new Session<SystemRecord>(
+                        var query = await new Session<SystemRecord>(
                             DataManager.Init(Defaults.ConnectionStrings.Localhost, Defaults.DatabaseNames.TestProd,
-                                null), "pix_sys").GetRecordById("pix_google_apikey").Result.Data;
+                                null), "pix_sys").GetRecordById("pix_google_apikey");
+                        apikey = query.Data;
 
                         return apikey;
 
@@ -108,4 +107,4 @@ namespace pix_dtmodel.Models
 
         }
     }
-}
+

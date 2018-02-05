@@ -23,6 +23,11 @@ namespace pix_dtmodel.Models
             set => email = "Ignored!";
         }
 
+        [BsonIgnoreIfNull]
+        public string First { get; set; }
+
+        [BsonIgnoreIfNull] public string Last;
+
         
 
         private string gid;
