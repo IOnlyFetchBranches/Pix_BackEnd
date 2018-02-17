@@ -62,10 +62,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Adapters\Indexer.cs" />
+    <Compile Include="Adapters\Updatable.cs" />
     <Compile Include="Managers\DataManager.cs" />
     <Compile Include="Managers\Firebase\FirebaseJWTAuth.cs" />
     <Compile Include="Managers\PicManager.cs" />
     <Compile Include="Models\Defaults.cs" />
+    <Compile Include="Models\PicPlaceholder.cs" />
     <Compile Include="Models\Profile.cs" />
     <Compile Include="Models\SystemRecord.cs" />
     <Compile Include="Models\Token.cs" />
@@ -75,9 +78,11 @@
     <Compile Include="Models\Pic.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Util\DtLogger.cs" />
+    <Compile Include="Util\IndexFactory.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

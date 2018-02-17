@@ -115,8 +115,12 @@ namespace Pix_Api.Controllers
 
 
                 bool isNewUser = false;
+
+                //Find User
+                var record = await credSession.GetRecordById(authPack["gid"]);
+
                 //Check the backend
-                if ( await credSession.GetRecordById(authPack["gid"]) == null)
+                if ( record == null)
                 {
                     Logger.Log("Generating New User...", LogFile);
                     //if it doesnt exist [First time login] Create the records
@@ -134,6 +138,7 @@ namespace Pix_Api.Controllers
 
                     };
 
+                    authPack.Add("uid",newUser.Uid);
 
                     isNewUser = true; //This will ('Should') signal client to request and then post a New Username.
 
@@ -157,22 +162,21 @@ namespace Pix_Api.Controllers
                     });
 
                     //Done.
-                    
-
 
                 }
 
-                
-                
+
+                Logger.Log("Building Response...", LogFile);
+
+                if (!isNewUser)
+                    authPack.Add("uid", record.Uid);
+
                 //Get final time
-                var timeTaken = (beginTime - DateTime.Now).Milliseconds;
+                var timeTaken = (DateTime.Now - beginTime).Milliseconds;
 
                 //Add server messages here
                 authPack.Add("isNewUser", isNewUser + "");
-                authPack.Add("requestTime", timeTaken +"ms");
-
-
-                Logger.Log("Building Response...", LogFile);
+                authPack.Add("requestTime", timeTaken + "ms");
 
 
                 //pix_sec.Gen.Packager.CreateAuthPackage(resContent)
@@ -209,7 +213,7 @@ namespace Pix_Api.Controllers
                 Debug.WriteLine(e.Message,"TokenLogin");
 
                 HttpResponseMessage errRess = new HttpResponseMessage(HttpStatusCode.BadRequest);
-                errRess.Content = new StringContent(e.Message);
+                errRess.Content = new StringContent(e.Message + " " +e.Source + " " + e.StackTrace);
                 Logger.Log("An Error Occured :( /n" +e.Message, LogFile);
                 LogFile.Close();
                 return errRess;

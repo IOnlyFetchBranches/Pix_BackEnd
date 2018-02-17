@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.AccessControl;
@@ -8,7 +9,12 @@ using System.Text;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.GeoJsonObjectModel;
+using MongoDB.Driver.Linq;
+using pix_dtmodel.Adapters;
 using pix_dtmodel.Models;
+using pix_dtmodel.Util;
+using static pix_dtmodel.Util.DtLogger;
 
 namespace pix_dtmodel.Connectors
 {
@@ -24,6 +30,17 @@ namespace pix_dtmodel.Connectors
         public string Collection => collectionName;
 
         public EventHandler onQueryComplete;
+
+        //Getters
+        public IMongoCollection<T> GetCollection()
+        {
+            return collection;
+         }
+
+        public IMongoDatabase GetDatabase()
+        {
+            return database;
+        }
 
         
 
@@ -58,6 +75,37 @@ namespace pix_dtmodel.Connectors
             {
                 Debug.WriteLine("Caught Error, Could not find item [GetRecordById]\n"+
                                 e.Message);
+                return null;
+            }
+
+
+        }
+
+        public async Task<UpdateResult> UpdateRecordById(string id,string fieldToUpdate, IUpdatable newState)
+        {
+            try
+            {
+                var filter = Builders<T>.Filter.Eq("_id", id);
+
+                var action = Builders<T>.Update.Set(
+                    fieldToUpdate, (string) newState.getBundle()[fieldToUpdate]
+                );
+
+                LogG("Session", "Value to add: " +(string) newState.getBundle()[fieldToUpdate]);
+
+
+                var result = await collection.UpdateOneAsync(filter, action);
+
+
+
+
+                return null;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("Caught Error, Could not find item [GetRecordById]\n"+
+                                e.Message);
+                LogG("Session","Could not find item to update " + id + Environment.NewLine + e.Message + Environment.NewLine + e.StackTrace);
                 return null;
             }
 
@@ -133,7 +181,15 @@ namespace pix_dtmodel.Connectors
 
         public async Task<string> Add(T model)
         {
-            await collection.InsertOneAsync(model);
+            LogG("Session", " Pushing...");
+
+            var result = collection.InsertOneAsync(model);
+            
+            if (result.Exception != null)
+            {
+                LogG("Session", " Push error - " + result.Exception.Message);
+            }
+            await result;
             return "success!";
         }
 
@@ -148,26 +204,73 @@ namespace pix_dtmodel.Connectors
             try
             {
                 T find = await collection.Find(Builders<T>.Filter.Eq("_id", key)).SingleAsync();
-           
-            
-            
+                    
                     if (find == null)
                     {
+                        LogG("Session", "No Match for " + key + " With Matching value " + valueBeingCompared);
                         return false;
-                    }   
-                bool good = find.ToBsonDocument()[fieldToCheck] == valueBeingCompared;
+                    }
+
+                LogG("Session", "Found Document, Verifying Value..." );
+                bool good = find.ToBsonDocument().ToDictionary().ContainsValue(valueBeingCompared);
+                LogG("Session", "Done... ["+good+"]");
                 return good;
             }
             catch (Exception e)
             {
                 Debug.WriteLine("Caught Error, Possibly Wrong Username? \n" + e.Message);
+                LogG("Session", e.Message);
                 return false;
             }
 
         }
 
 
+        //Geo Methods [Cannot be Generic unfortunately :(]
+
+            //Control
+
+
+        public async  Task<IQueryable<T>> GetPicsByUserWithin(string uid, GeoJsonPoint<GeoJson2DGeographicCoordinates> point, double maxDist, Session<Pic> session)
+        {
+
+            
+
+            //Do index [if needed]
+            IndexFactory.GetPicIndexer(session).MakeIndex();    
+            //Build Query
+            var query = Builders<T>.Filter.And(
+                Builders<T>.Filter.Eq("_id", uid),
+                Builders<T>.Filter.Near("GeoData", point, maxDist));
+
+            //Run Query
+            var results = (await collection.FindAsync(query)).Current;
+
+            //Log
+            LogG("Session", "query type-WithinGeo/Id size-" + results.Count() + " \n requestBy-" +uid+" " +
+                            "centered-"+ point.Coordinates.Latitude +":"+point.Coordinates.Longitude);
+
+
+            return results.AsQueryable();
+
+
+
+
+        }
+
+        public static T GetByUserAt(string uid)
+        {
+            throw new NotImplementedException("This method is deprecated/not in use!");
+        }
+
+
+
+
+
+        
 
 
     }
+
+
 }

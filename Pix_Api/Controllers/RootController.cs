@@ -33,7 +33,9 @@ namespace Pix_Api.Controllers
                 var template = File.ReadAllText(ViewPath);
 
                 //use Razor to Parse it into proper html
+#pragma warning disable 618
                 var html = Razor.Parse(template, model);
+#pragma warning restore 618
 
 
                 res.Content = new StringContent(html);

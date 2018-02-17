@@ -70,9 +70,21 @@ namespace Pix_Api
 
             config.Routes.MapHttpRoute(
                 name: "PostPicture",
-                routeTemplate: "pics/post/create",
+                routeTemplate: "pics/legacy/post/",
                 defaults: new {controller = "Pics"}
             );
+
+             config.Routes.MapHttpRoute(
+                name: "PostMetadata",
+                routeTemplate: "pics/upload/begin",
+                defaults: new {controller = "Pics", action = "begin"}
+            );
+            config.Routes.MapHttpRoute(
+                name: "BeginUpload",
+                routeTemplate: "pics/upload/go/{picId}",
+                defaults: new {controller = "Pics", picId = ""}
+            );
+
             
 
 

@@ -13,7 +13,7 @@ namespace pix_sec.Rules
         {
             foreach(object o in subjects)
             {
-                if (o == null)
+                if (o == null || o.Equals(null))
                 {
                     throw new SecurityException("Failed Assert: Exists \n");
                 }

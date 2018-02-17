@@ -39,6 +39,9 @@ namespace pix_sec.Gen
             var encUid = Convert.ToBase64String(Encoding.ASCII.GetBytes(uid));
             var encSalt = Convert.ToBase64String(Encoding.ASCII.GetBytes(DateTime.Now.ToString("hh:mm:ss")
                 + DateTime.Now.Millisecond + uid.Substring(0,5)));
+            encSalt = encSalt.Replace("=", "a");
+            encSalt = encSalt.Replace("+", "A");
+            encSalt = encSalt.Replace("_", "b");
             
             //"p<b64(uid) 0 - halfLength><b64(datetime<uid.substring 0-5>)
             return (string) "p" + encUid.Substring(0, encUid.Length / 2) + encSalt;

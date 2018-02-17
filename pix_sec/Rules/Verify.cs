@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using pix_dtmodel.Connectors;
 using pix_dtmodel.Managers;
 using pix_dtmodel.Models;
+using pix_dtmodel.Util;
 
 namespace pix_sec.Rules
 {
@@ -19,7 +20,12 @@ namespace pix_sec.Rules
 
         public async static Task<bool> CheckUser(pix_dtmodel.Models.SessionToken token)
         {
-            return await tokenSession.CheckFieldFrom(token.Gid, Defaults.Fields.Users.Uid, token.Uid);
+            var result = tokenSession.CheckFieldFrom(token.Gid, Defaults.Fields.Users.Uid, token.Uid);
+            if (result.Exception != null)
+            {
+                DtLogger.LogG("Verify",result.Exception.Message);
+            }
+            return await result;
         }
 
     }
