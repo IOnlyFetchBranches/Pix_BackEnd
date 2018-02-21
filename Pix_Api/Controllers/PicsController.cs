@@ -32,24 +32,35 @@ namespace Pix_Api.Controllers
         private static IMongoDatabase database =
             DataManager.Init(Defaults.ConnectionStrings.Localhost, Defaults.DatabaseNames.TestProd, null);
 
-        private int MAX_QUERY_LENGTH = 100; // Max amount of photos that can be sent/retrieved at a time
+        private int MAX_QUERY_LENGTH = 10000; // Max amount of photos that can be sent/retrieved at a time
 
         //Open a connection with the Pic collection
         private static Session<Pic> session = new Session<Pic>(database, Defaults.Collections.Pics);
 
-        public async Task<Image> Get(string id)
+        //Max dist currently is 100 km per pull
+        private double GLOBAL_MAX_DIST = 100000; //Max0 radius iin meters near queries will execute at when called here.
+
+        public async Task<HttpResponseMessage> Get(string id)
         {
             var result = await session.GetRecordById(id);
             //Attempt to load image
             try
             {
-                Image image = Image.FromFile(result.Location);
-
-                return image;
+                var image = File.OpenRead(result.Location);
+                var bytes = new byte[image.Length];
+                await image.ReadAsync(bytes, 0, bytes.Length);
+                return ResponseBuilder.Make()
+                    .AsMultipart()
+                    .PutBytes(Path.GetFileName(image.Name), bytes, "image/jpg")
+                    .ToMultiPartResponse();
             }
             catch (Exception e)
             {
-                return null;
+                return ResponseBuilder.Make()
+                    .AsSimple()
+                    .WithCode(HttpStatusCode.InternalServerError)
+                    .Add("message", "Failed to retrieve Pic!" + e.Message)
+                    .ToJsonResponse();
             }
 
         }
@@ -89,7 +100,7 @@ namespace Pix_Api.Controllers
 
         //Returns a json result of a querable of json strings...
         [System.Web.Http.ActionName("GetPicsFromUsersByPage")]
-        public async Task<JsonResult<IQueryable<string>>> GetPicsFromUsersByPage(long pagenum, long size)
+        public async Task<JsonResult<Pic>> GetPicsFromUsersByPage(long pagenum, long size)
         {
             return null;
         }
@@ -250,7 +261,7 @@ namespace Pix_Api.Controllers
 
 
         //Multipart
-        //Required data ["uid","gid","mime","lat","long", "name"]
+        //Required data ["uid","gid","mime","lat","long", "name", "desc"]
         //First Step of the multipart process.
         [System.Web.Http.ActionName("begin")]
         public async Task<HttpResponseMessage> BeginUpload()
@@ -291,6 +302,7 @@ namespace Pix_Api.Controllers
                     string uid = (string)final["uid"];
                     string gid = (string)final["gid"]; //This will now be a gid.
                     string mime = (string)final["mime"];
+                
                     //string token = (string)final["token"]; //Not checking while debugging to make life easier.
 
 
@@ -368,6 +380,10 @@ namespace Pix_Api.Controllers
                     pic.Location = "null";
                     pic.GeoData = point;
                     pic.Name = (string)final["name"];
+                    if ((string) final["desc"] != null)
+                    {
+                        pic.Description = (string)final["desc"];
+                    }
                     pic.Filled = false;
                     //Everything else is optional
 
@@ -434,8 +450,13 @@ namespace Pix_Api.Controllers
 
         }
 
-        //Required data [multipartdata, set filename in header Content Disposition]
-        //Last Step of the multipart process.
+        /// <summary>
+        ///  Required data [multipartdata, set filename in header Content Disposition]
+        ///  Last Step of the multipart process.
+        /// </summary>
+        /// <param name="picId"></param>
+        /// <returns></returns>
+
         [System.Web.Http.Route("pics/upload/go/{picId}")]
         public async Task<HttpResponseMessage> BeginUpload(string picId)
         {
@@ -578,6 +599,68 @@ namespace Pix_Api.Controllers
             }
         }
 
+        //This get is a POST ["lat","lon","dist"] dist is in meters cannot be > Max Dist
+        [System.Web.Http.HttpPost]
+        [System.Web.Http.Route("pics/by/region")]
+        public async Task<JsonResult<IQueryable<Pic>>> GetPicsByRegion()
+        {
+            
+            //Later you're gonna wanna filter for valid tokens first, not while debugging though
+
+            //Get lat+ long data from the request body
+
+            //Start
+            byte[] bytes = Convert.FromBase64String(await Request.Content.ReadAsStringAsync());
+
+            LogG("PicController", "Decoding...");
+
+
+            var final = Encoding.ASCII.GetString(bytes);
+
+            LogG("PicController", "Deserializing...");
+
+
+            var json = JsonConvert.DeserializeObject<IDictionary<string, object>>(final);
+
+            LogG("PicController", "Processing...");
+
+            //Get Point
+            //out is c#'s pointer lol
+            var lat_d = (double) json["lat"];
+            var lon_d = (double) json["lon"];
+
+            var dist = (double) json["dist"];
+
+            if (dist > GLOBAL_MAX_DIST)
+            {
+                dist = GLOBAL_MAX_DIST;
+            }
+
+
+            //Our center point                                                                
+            var point = new GeoJsonPoint<GeoJson2DGeographicCoordinates>
+                (new GeoJson2DGeographicCoordinates(lat_d, lon_d));
+
+            var results = await session.GetPicsWithin(point, dist, session);
+
+            
+
+            if (results == null)
+                return null;
+                    
+                    
+            foreach (var pic in results)
+            {
+                pic.Location = "https://www.api.gopix.xyz/pic/id=" + pic.Pid;
+                pic.Gid = "";
+            }
+
+            return new JsonResult<IQueryable<Pic>>(results, new JsonSerializerSettings(), Encoding.ASCII, this);
+
+        }
+
+
+      
         
 
 

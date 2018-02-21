@@ -222,6 +222,8 @@
     <None Include="Properties\PublishProfiles\CustomProfile3.pubxml" />
     <Content Include="Static\Pages\apiroot.cshtml" />
     <None Include="Properties\PublishProfiles\CustomProfile4.pubxml" />
+    <None Include="Properties\PublishProfiles\CustomProfile5.pubxml" />
+    <None Include="Properties\PublishProfiles\Default Settings.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

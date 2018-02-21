@@ -29,6 +29,7 @@ namespace Pix_Api
                 defaults: new { controller = "Login" }
             );
 
+            //Not in use currently
             config.Routes.MapHttpRoute(
                 name: "Get",
                 routeTemplate: "login/",
@@ -84,8 +85,27 @@ namespace Pix_Api
                 routeTemplate: "pics/upload/go/{picId}",
                 defaults: new {controller = "Pics", picId = ""}
             );
+            config.Routes.MapHttpRoute(
+                name: "GetPicsByRegion",
+                routeTemplate: "pics/by/region", //This will also require an additional &&{token} but not during debugging
+                defaults: new {controller = "Pics", action= "GetPicsByRegion" }
+            );
 
+            //Return image as a Byte stream
+            config.Routes.MapHttpRoute(
+                name: "StreamImageById",
+                routeTemplate: "pics/id={id}",
+                defaults: new {controller = "Pics", id=""}
+            );
+            //Return image in b64
+            config.Routes.MapHttpRoute(
+                name: "GetImageById",
+                routeTemplate: "pics/{id}",
+                defaults: new { controller = "Pics" }
+            );
             
+
+
 
 
         }

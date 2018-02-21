@@ -65,9 +65,11 @@
     <Compile Include="Adapters\Indexer.cs" />
     <Compile Include="Adapters\Updatable.cs" />
     <Compile Include="Managers\DataManager.cs" />
+    <Compile Include="Managers\FilepartManager.cs" />
     <Compile Include="Managers\Firebase\FirebaseJWTAuth.cs" />
     <Compile Include="Managers\PicManager.cs" />
     <Compile Include="Models\Defaults.cs" />
+    <Compile Include="Models\PartedFile.cs" />
     <Compile Include="Models\PicPlaceholder.cs" />
     <Compile Include="Models\Profile.cs" />
     <Compile Include="Models\SystemRecord.cs" />

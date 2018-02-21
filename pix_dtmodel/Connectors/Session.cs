@@ -88,10 +88,10 @@ namespace pix_dtmodel.Connectors
                 var filter = Builders<T>.Filter.Eq("_id", id);
 
                 var action = Builders<T>.Update.Set(
-                    fieldToUpdate, (string) newState.getBundle()[fieldToUpdate]
+                    fieldToUpdate, newState.getBundle()[fieldToUpdate]
                 );
 
-                LogG("Session", "Value to add: " +(string) newState.getBundle()[fieldToUpdate]);
+                LogG("Session", "Value to add: " +newState.getBundle()[fieldToUpdate]);
 
 
                 var result = await collection.UpdateOneAsync(filter, action);
@@ -228,7 +228,40 @@ namespace pix_dtmodel.Connectors
 
         //Geo Methods [Cannot be Generic unfortunately :(]
 
-            //Control
+        //Control
+        public async Task<IQueryable<T>> GetPicsWithin(GeoJsonPoint<GeoJson2DGeographicCoordinates> point, double maxDist, Session<Pic> session)
+        {
+
+
+
+            //Build Query
+            var query = Builders<T>.Filter.Near("geodata",point,maxDist);
+
+
+            //Run Query
+            var qresults = await collection.Find(query).ToListAsync();
+
+            var results = qresults;
+
+            
+        
+
+
+
+            //Log
+            if (results != null)
+            {
+                LogG("Session", "query type-WithinGeo/Id size-" + results + " \n requestBy-" + "system" + " " +
+                                "centered-" + point.Coordinates.Latitude + ":" + point.Coordinates.Longitude);
+                return results.AsQueryable();
+            }
+
+
+            return null;
+
+
+        }
+
 
 
         public async  Task<IQueryable<T>> GetPicsByUserWithin(string uid, GeoJsonPoint<GeoJson2DGeographicCoordinates> point, double maxDist, Session<Pic> session)

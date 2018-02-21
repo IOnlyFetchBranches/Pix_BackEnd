@@ -27,6 +27,8 @@ namespace pix_dtmodel.Models
         public string Pid{ get; set;}
         public string Uid { get; set; }
         public string Gid { get; set; }
+        [BsonIgnoreIfNull]
+        public string Description { get; set; }
         
         public string Location { get; set; }
         //Set name
